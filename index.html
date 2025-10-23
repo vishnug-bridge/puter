@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>AI Chat (Model Picker)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --card: #121822;
+            --muted: #8aa0b2;
+            --text: #e8f0f7;
+            --accent: #5aa9ff;
+            --accent-2: #2d8cff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #081018, #0b0f14);
+            color: var(--text);
+            font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .wrap {
+            min-height: 100svh;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            backdrop-filter: saturate(140%) blur(8px);
+            background: rgba(8, 16, 24, .75);
+            border-bottom: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .bar {
+            max-width: 960px;
+            margin: auto;
+            padding: 14px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: 700;
+            letter-spacing: .2px;
+        }
+
+        select,
+        button,
+        input[type="text"],
+        textarea {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 12px;
+            padding: 10px 12px;
+            outline: none;
+        }
+
+        select {
+            padding-right: 36px;
+        }
+
+        button {
+            background: linear-gradient(180deg, var(--accent), var(--accent-2));
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button.secondary {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, .1);
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 16px;
+            width: 100%;
+        }
+
+        .chat {
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 18px;
+            height: min(72svh, 680px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .messages {
+            padding: 16px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: linear-gradient(180deg, #1e2a3a, #18222f);
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: linear-gradient(180deg, #141b26, #0f1622);
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            border-top: 1px solid rgba(255, 255, 255, .06);
+            background: rgba(0, 0, 0, .2);
+        }
+
+        .row textarea {
+            flex: 1;
+            resize: none;
+            min-height: 44px;
+            max-height: 160px;
+        }
+
+        .tiny {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .pill {
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 999px;
+            padding: 6px 10px;
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #14c184;
+            box-shadow: 0 0 8px #14c184aa;
+            display: inline-block;
+        }
+
+        footer {
+            padding: 14px 16px;
+            opacity: .86;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, .2);
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .controls {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div class="bar">
+                <div class="logo">🤖 Chat Agent</div>
+                <div class="pill">
+                    <span class="tiny">Model</span>
+                    <select id="model">
+                        <option value="claude" selected>Claude (default)</option>
+                        <option value="gpt-5-nano">GPT-5 Nano</option>
+                        <option value="gpt-4o">GPT-4o</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        <option value="grok-2">Grok 2</option>
+                        <option value="mistral-large">Mistral Large</option>
+                        <option value="deepseek-chat">DeepSeek Chat</option>
+                    </select>
+                </div>
+                <div class="controls">
+                    <button id="clearBtn" class="secondary" title="Clear chat">Clear</button>
+                    <span class="tiny" id="authState"><span class="status-dot"></span>&nbsp;Ready</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="chat">
+                <div id="messages" class="messages"></div>
+                <div class="row">
+                    <textarea id="input" placeholder="Type a message… (Shift+Enter for newline)"></textarea>
+                    <button id="sendBtn">Send</button>
+                </div>
+            </div>
+            <div class="tiny" style="margin-top:8px;">
+                Tips: pick a model above • responses stream live • use ↑ to edit last prompt.
+            </div>
+        </main>
+
+        <footer>
+            <div class="tiny">
+                Powered by <a href="https://developer.puter.com" target="_blank" rel="noopener">Puter</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // --- Simple chat agent with model dropdown (default: "claude") ---
+        const el = (id) => document.getElementById(id);
+        const messagesEl = el('messages');
+        const inputEl = el('input');
+        const modelEl = el('model');
+        const sendBtn = el('sendBtn');
+        const clearBtn = el('clearBtn');
+
+        // Conversation memory to send context across turns
+        /** @type {{role:'system'|'user'|'assistant', content:string}[]} */
+        let history = [
+            { role: 'system', content: 'You are a helpful, concise assistant.' }
+        ];
+
+        function addBubble(text, who = 'bot', streaming = false) {
+            const div = document.createElement('div');
+            div.className = `msg ${who === 'user' ? 'user' : 'bot'}`;
+            div.innerText = text || '';
+            if (streaming) div.dataset.streaming = '1';
+            messagesEl.appendChild(div);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            return div;
+            // (We keep markup simple; markdown rendering can be added later.)
+        }
+
+        function setSendingState(sending) {
+            sendBtn.disabled = sending;
+            sendBtn.textContent = sending ? 'Sending…' : 'Send';
+        }
+
+        function ensureSignedIn() {
+            // Puter auto-prompts if needed; we expose a manual path if desired.
+            // You can call: await puter.auth.signIn()
+            // Here we optimistically proceed; SDK will handle auth.
+            return true;
+        }
+
+        async function sendMessage() {
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            ensureSignedIn();
+            setSendingState(true);
+
+            // Append user message locally
+            history.push({ role: 'user', content: text });
+            addBubble(text, 'user');
+            inputEl.value = '';
+
+            // Placeholder assistant bubble (streaming)
+            const botDiv = addBubble('', 'bot', true);
+
+            try {
+                const model = modelEl.value || 'claude';
+                // Stream the response using Puter AI
+                const stream = await puter.ai.chat(history, { model, stream: true });
+
+                let acc = '';
+                for await (const part of stream) {
+                    const chunk = part?.text ?? '';
+                    if (!chunk) continue;
+                    acc += chunk;
+                    botDiv.innerText = acc;
+                    messagesEl.scrollTop = messagesEl.scrollHeight;
+                }
+
+                // Persist final assistant message into history
+                history.push({ role: 'assistant', content: acc || '(no output)' });
+            } catch (err) {
+                botDiv.innerText = `⚠️ Error: ${err?.message || err}`;
+            } finally {
+                if (botDiv.dataset.streaming) delete botDiv.dataset.streaming;
+                setSendingState(false);
+            }
+        }
+
+        // UI bindings
+        sendBtn.addEventListener('click', sendMessage);
+        clearBtn.addEventListener('click', () => {
+            history = [{ role: 'system', content: 'You are a helpful, concise assistant.' }];
+            messagesEl.innerHTML = '';
+        });
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+            // Cmd/Ctrl+Enter also sends:
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+            // Up arrow to recall last user message
+            if (e.key === 'ArrowUp' && !inputEl.value && history.length) {
+                for (let i = history.length - 1; i >= 0; i--) {
+                    if (history[i].role === 'user') { inputEl.value = history[i].content; break; }
+                }
+            }
+        });
+
+        // Greet with a small system tip
+        addBubble("Hi! I'm your chat agent. Pick a model from the dropdown (default: Claude) and ask me anything.");
+    </script>
+</body>
+
+</html>
